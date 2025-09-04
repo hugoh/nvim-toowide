@@ -1,47 +1,96 @@
-# A Neovim Plugin Template
+# nvim-toowide
 
-![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/ellisonleao/nvim-plugin-template/lint-test.yml?branch=main&style=for-the-badge)
-![Lua](https://img.shields.io/badge/Made%20with%20Lua-blueviolet.svg?style=for-the-badge&logo=lua)
+Highlight text that exceeds a character limit, precisely the way linters check line length.
 
-A template repository for Neovim plugins.
+Unlike plugins that operate on screen columns (affected by `tabstop` and display settings), nvim-toowide counts characters in the buffer text. This matches how most linters and formatters enforce style (e.g., 80/100/120 chars), so tabs or variable-width rendering do not skew the threshold.
 
-## Using it
+- Character-based limit (tabs don't inflate width)
+- Respects `textwidth` when set; otherwise uses per-filetype overrides or a global default
+- Lightweight and fast via extmarks
+- Debounced updates while you type
+- Simple color configuration and a dedicated highlight group
 
-Via `gh`:
+## Installation
 
+Use your preferred plugin manager. Then call `require("toowide").setup()`.
+
+Example (lazy.nvim):
+```lua
+{
+  "hugoh/nvim-toowide",
+  config = function()
+    require("toowide").setup()
+  end,
+}
 ```
-$ gh repo create my-plugin -p ellisonleao/nvim-plugin-template
+
+Example (packer.nvim):
+```lua
+use({
+  "hugoh/nvim-toowide",
+  config = function()
+    require("toowide").setup()
+  end,
+})
 ```
 
-Via github web page:
+## Configuration
 
-Click on `Use this template`
+Call `setup()` with options. Defaults shown below:
 
-![](https://docs.github.com/assets/cb-36544/images/help/repository/use-this-template-button.png)
-
-## Features and structure
-
-- 100% Lua
-- Github actions for:
-  - running tests using [plenary.nvim](https://github.com/nvim-lua/plenary.nvim) and [busted](https://olivinelabs.com/busted/)
-  - check for formatting errors (Stylua)
-  - vimdocs autogeneration from README.md file
-  - luarocks release (LUAROCKS_API_KEY secret configuration required)
-
-### Plugin structure
-
+```lua
+require("toowide").setup({
+  colors = {
+    -- Highlight group "LineLengthHighlight" is created with these colors
+    ctermfg = nil,        -- 0-255 or nil
+    ctermbg = "darkgrey", -- 0-255, a cterm color name, or nil
+    fg = nil,             -- "#RRGGBB" or another hl group name, or nil
+    bg = "#8B0000",       -- "#RRGGBB" or another hl group name, or nil
+  },
+  filetypes = { "*" },                   -- filetype patterns to enable for
+  excluded_filetypes = { "NeogitStatus", "NeogitDiffView" },
+  max_lines = 10000,                     -- disable for huge buffers
+  debounce_ms = 100,                     -- debounce changes
+  default_limit = 80,                    -- used when 'textwidth' is 0 and no ft override
+  filetype_limits = { go = 120, lua = 120, yaml = 120 },
+})
 ```
-.
-├── lua
-│   ├── plugin_name
-│   │   └── module.lua
-│   └── plugin_name.lua
-├── Makefile
-├── plugin
-│   └── plugin_name.lua
-├── README.md
-├── tests
-│   ├── minimal_init.lua
-│   └── plugin_name
-│       └── plugin_name_spec.lua
-```
+
+How the limit is chosen:
+1. If `:setlocal textwidth` is greater than 0, use it.
+2. Else, if `filetype_limits[&filetype]` exists, use that.
+3. Else, use `default_limit`.
+
+## Usage
+
+- The plugin automatically attaches on buffer/window enter for configured `filetypes`.
+- It updates highlights as you type with debouncing.
+- You can manually attach/detach if needed via the API below.
+
+Highlight group:
+- The plugin defines and uses the group `LineLengthHighlight`. Customize its colors via `setup({ colors = { ... } })`.
+
+## Comparison with other plugins
+
+Many other plugins highlighting long lines based on virtual screen columns. That can vary with `tabstop` (4 vs 8), conceal, or other display features, so an 80 "column" limit on screen may not match what a linter regards as 80 characters. nvim-toowide measures line length directly from the buffer text, keeping the behavior aligned with linters and CI checks.
+
+Example: With `tabstop=8`, a single tab may occupy 8 screen columns. With `tabstop=4`, the same tab occupies 4 screen columns. Linters typically still count it as one character in the source. nvim-toowide follows that character-based logic.
+
+
+- Screen-column based (e.g., [overlength.nvim](https://github.com/lcheylus/overlength.nvim)):
+  - Pros: visually matches what you see on screen with current `tabstop` and display settings.
+  - Cons: the limit moves with `tabstop` changes and may drift from linter rules; a line's "columns" can shrink/grow without the text changing.
+
+- Character-based (nvim-toowide):
+  - Pros: consistent with linters and formatters; tabs and visual changes don't shift the threshold.
+  - Cons: the visual marker might not align with a column ruler if you rely on screen columns.
+
+Choose based on whether you prefer visual alignment or linter-accurate limits. nvim-toowide is designed for teams and CI environments that enforce character-based line length.
+
+## Limitations
+
+- The line length is computed from the buffer string length. In typical ASCII source files this matches "characters" as used by linters. For multi-byte or width-varying glyphs, visual width can still differ on screen, by design.
+
+## License
+
+[MIT](./LICENSE).

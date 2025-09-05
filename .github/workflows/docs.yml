@@ -4,11 +4,16 @@ on:
       - main
 name: docs
 
+permissions:
+  contents: write
+
 jobs:
   docs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: panvimdoc
         uses: kdheepak/panvimdoc@main
         with:

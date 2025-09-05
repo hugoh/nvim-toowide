@@ -18,9 +18,8 @@ Example (lazy.nvim):
 ```lua
 {
   "hugoh/nvim-toowide",
-  config = function()
-    require("toowide").setup()
-  end,
+  event = { "BufEnter", "BufWinEnter" },
+  opts = {},
 }
 ```
 
@@ -48,7 +47,7 @@ require("toowide").setup({
     bg = "#8B0000",       -- "#RRGGBB" or another hl group name, or nil
   },
   filetypes = { "*" },                   -- filetype patterns to enable for
-  excluded_filetypes = { "NeogitStatus", "NeogitDiffView" },
+  excluded_filetypes = { "", "nofile", "NeogitStatus", "NeogitDiffView", "snacks_terminal" },
   max_lines = 10000,                     -- disable for huge buffers
   debounce_ms = 100,                     -- debounce changes
   default_limit = 80,                    -- used when 'textwidth' is 0 and no ft override

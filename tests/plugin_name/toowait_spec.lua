@@ -110,4 +110,38 @@ describe("toowide", function()
     assert(enabled == false, "expected disabled when limit is 0")
     vim.api.nvim_buf_delete(buf, { force = true })
   end)
+
+  it("updates marks correctly when joining lines (J)", function()
+    local buf = new_buf({ "a", "abcd", "x" }, "text")
+    toowide.attach_buffer(buf)
+    vim.wait(50, function()
+      return false
+    end)
+
+    local marks = get_marks(buf)
+    assert(#marks == 1, "expected 1 extmark before join, got " .. tostring(#marks))
+
+    -- Perform an actual join (Normal-mode 'J')
+    vim.api.nvim_win_set_buf(0, buf)
+    vim.api.nvim_win_set_cursor(0, { 1, 0 })
+    vim.cmd("normal! J")
+    vim.wait(50, function()
+      return false
+    end)
+
+    marks = get_marks(buf)
+    assert(#marks == 1, "expected 1 extmark after join, got " .. tostring(#marks))
+
+    local by_row = {}
+    for _, m in ipairs(marks) do
+      local row, col, details = m[2], m[3], m[4]
+      by_row[row] = { col = col, end_col = details.end_col }
+    end
+
+    assert(by_row[0] ~= nil, "missing mark on joined line")
+    assert(by_row[0].col == 3, "start col should be 3 for 'a abcd'")
+    assert(by_row[0].end_col == 6, "end col should be 6 for 'a abcd'")
+
+    vim.api.nvim_buf_delete(buf, { force = true })
+  end)
 end)

@@ -146,9 +146,9 @@ M.attach_buffer = function(bufnr)
   local timer = nil
   ---@param start_line integer
   ---@param end_line integer
-  local debounced_highlight = function(start_line, end_line)
-    if timer then
+  local debounced_highlight = function(start_line, end_line) if timer then
       timer:stop()
+      timer:close()
     end
     timer = vim.loop.new_timer()
     timer:start(
@@ -161,8 +161,13 @@ M.attach_buffer = function(bufnr)
   end
 
   vim.api.nvim_buf_attach(bufnr, false, {
-    on_lines = function(_, _, _, start_line, _, end_line_new, _)
-      debounced_highlight(start_line, end_line_new)
+    on_lines = function(_, _, _, start_line, last_line, end_line_new, _)
+      if last_line ~= end_line_new then
+        -- Structural change (join/split): rehighlight entire buffer
+        debounced_highlight(0, vim.api.nvim_buf_line_count(bufnr))
+      else
+        debounced_highlight(start_line, last_line)
+      end
     end,
     on_detach = function()
       attached_buffers[bufnr] = nil

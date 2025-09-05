@@ -23,7 +23,7 @@ local default_config = {
     bg = "#8B0000",
   },
   filetypes = { "*" },
-  excluded_filetypes = { "NeogitStatus", "NeogitDiffView" },
+  excluded_filetypes = { "", "nofile", "NeogitStatus", "NeogitDiffView", "snacks_terminal" },
   max_lines = 10000,
   debounce_ms = 100,
   default_limit = 80,
@@ -129,8 +129,7 @@ M.should_enable = function(bufnr)
     return false
   end
   local bt = vim.bo[bufnr].buftype
-  local allowed_bt = { [""] = true, nofile = true }
-  return vim.bo[bufnr].modifiable and allowed_bt[bt] and vim.api.nvim_buf_line_count(bufnr) <= M.config.max_lines
+  return vim.bo[bufnr].modifiable and vim.api.nvim_buf_line_count(bufnr) <= M.config.max_lines
 end
 
 --- Attach buffer for highlighting

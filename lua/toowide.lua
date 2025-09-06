@@ -124,15 +124,9 @@ M.should_enable = function(bufnr)
   local ft = vim.bo[bufnr].filetype
   if M.config.excluded_filetypes and #M.config.excluded_filetypes > 0 then
     for _, pat in ipairs(M.config.excluded_filetypes) do
-      if pat == "" then
-        if ft == "" then
-          return false
-        end
-      else
-        local anchored = "^" .. pat .. "$"
-        if ft:match(anchored) then
-          return false
-        end
+      local anchored = "^" .. pat .. "$"
+      if ft:match(anchored) then
+        return false
       end
     end
   end

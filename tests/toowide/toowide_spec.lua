@@ -97,9 +97,18 @@ describe("toowide", function()
   end)
 
   it("should_enable respects excluded filetypes", function()
-    local buf = new_buf({ "foo" }, "NeogitStatus")
+    for _, ft in ipairs({ "", "NeogitStatus" }) do
+      local buf = new_buf({ "foo" }, ft)
+      local enabled = toowide.should_enable(buf)
+      assert(enabled == false, "expected disabled for excluded filetype '" .. ft .. "'")
+      vim.api.nvim_buf_delete(buf, { force = true })
+    end
+  end)
+
+  it("should_enable respects excluded filetype patterns with Lua patterns", function()
+    local buf = new_buf({ "foo" }, "snacks_terminal")
     local enabled = toowide.should_enable(buf)
-    assert(enabled == false, "expected disabled for excluded filetype")
+    assert(enabled == false, "expected disabled for filetype matching wildcard 'snacks_*'")
     vim.api.nvim_buf_delete(buf, { force = true })
   end)
 

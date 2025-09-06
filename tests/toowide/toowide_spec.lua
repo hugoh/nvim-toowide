@@ -14,6 +14,12 @@ local function get_marks(buf)
   return vim.api.nvim_buf_get_extmarks(buf, ns, 0, -1, { details = true })
 end
 
+local function short_wait()
+  vim.wait(50, function()
+    return false
+  end)
+end
+
 describe("toowide", function()
   before_each(function()
     -- Use a small limit and fast debounce for tests
@@ -74,9 +80,7 @@ describe("toowide", function()
 
     -- Make first line exceed the limit
     vim.api.nvim_buf_set_lines(buf, 0, 1, false, { "abcd" })
-    vim.wait(50, function()
-      return false
-    end)
+    short_wait()
 
     marks = get_marks(buf)
     assert(#marks == 2, "expected 2 extmarks after change, got " .. tostring(#marks))
@@ -128,22 +132,18 @@ describe("toowide", function()
   end)
 
   it("updates marks correctly when joining lines (J)", function()
-    local buf = new_buf({ "a", "abcd", "x" }, "text")
+    local buf = new_buf({ "a", "abc", "x" }, "text")
     toowide.attach_buffer(buf)
-    vim.wait(50, function()
-      return false
-    end)
+    short_wait()
 
     local marks = get_marks(buf)
-    assert(#marks == 1, "expected 1 extmark before join, got " .. tostring(#marks))
+    assert(#marks == 0, "expected 0 extmark before join, got " .. tostring(#marks))
 
     -- Perform an actual join (Normal-mode 'J')
     vim.api.nvim_win_set_buf(0, buf)
     vim.api.nvim_win_set_cursor(0, { 1, 0 })
     vim.cmd("normal! J")
-    vim.wait(50, function()
-      return false
-    end)
+    short_wait()
 
     marks = get_marks(buf)
     assert(#marks == 1, "expected 1 extmark after join, got " .. tostring(#marks))
@@ -156,7 +156,14 @@ describe("toowide", function()
 
     assert(by_row[0] ~= nil, "missing mark on joined line")
     assert(by_row[0].col == 3, "start col should be 3 for 'a abcd'")
-    assert(by_row[0].end_col == 6, "end col should be 6 for 'a abcd'")
+    assert(by_row[0].end_col == 5, "end col should be 6 for 'a abcd'")
+
+    -- Undo and recheck highlights
+    vim.cmd("normal! u")
+    short_wait()
+
+    marks = get_marks(buf)
+    assert(#marks == 0, "expected 0 extmark after undo, got " .. tostring(#marks))
 
     vim.api.nvim_buf_delete(buf, { force = true })
   end)

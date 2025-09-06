@@ -167,13 +167,19 @@ M.attach_buffer = function(bufnr)
   end
 
   vim.api.nvim_buf_attach(bufnr, false, {
-    on_lines = function(_, _, _, start_line, last_line, end_line_new, _)
-      if last_line ~= end_line_new then
-        -- Structural change (join/split): rehighlight entire buffer
-        debounced_highlight(0, vim.api.nvim_buf_line_count(bufnr))
+    on_lines = function(_, _, _, start_line, last_line, new_last_line, _)
+      local delta = new_last_line - last_line
+      local s, e
+      if delta == 0 then
+        s = start_line
+        e = last_line
       else
-        debounced_highlight(start_line, last_line)
+        -- Structure has changed; add some padding; XXX: this is pretty hacky
+        delta = math.abs(delta)
+        s = start_line - delta
+        e = math.max(last_line, new_last_line)
       end
+      debounced_highlight(s, e)
     end,
     on_detach = function()
       attached_buffers[bufnr] = nil

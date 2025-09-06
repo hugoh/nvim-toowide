@@ -146,7 +146,8 @@ M.attach_buffer = function(bufnr)
   local timer = nil
   ---@param start_line integer
   ---@param end_line integer
-  local debounced_highlight = function(start_line, end_line) if timer then
+  local debounced_highlight = function(start_line, end_line)
+    if timer then
       timer:stop()
       timer:close()
     end

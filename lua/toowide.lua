@@ -10,7 +10,7 @@
 ---@class ToowideConfig
 ---@field colors ToowideColorConfig Highlight colors for over-limit text
 ---@field filetypes string[] Filetype patterns to enable the plugin for
----@field excluded_filetypes string[] Filetypes to always disable the plugin for
+---@field excluded_filetypes string[] Filetype patterns (Lua patterns) to always disable the plugin for
 ---@field max_lines integer Do not enable for buffers with more than this many lines
 ---@field debounce_ms integer Debounce time in milliseconds for highlighting after changes
 ---@field default_limit integer Default column limit when 'textwidth' is 0 and no filetype override exists
@@ -23,7 +23,7 @@ local default_config = {
     bg = "#8B0000",
   },
   filetypes = { "*" },
-  excluded_filetypes = { "", "nofile", "NeogitStatus", "NeogitDiffView", "snacks_terminal" },
+  excluded_filetypes = { "", "nofile", "NeogitStatus", "NeogitDiffView", "snacks_.*" },
   max_lines = 10000,
   debounce_ms = 100,
   default_limit = 80,
@@ -122,8 +122,19 @@ end
 ---@return boolean enabled
 M.should_enable = function(bufnr)
   local ft = vim.bo[bufnr].filetype
-  if M.config.excluded_filetypes and vim.tbl_contains(M.config.excluded_filetypes, ft) then
-    return false
+  if M.config.excluded_filetypes and #M.config.excluded_filetypes > 0 then
+    for _, pat in ipairs(M.config.excluded_filetypes) do
+      if pat == "" then
+        if ft == "" then
+          return false
+        end
+      else
+        local anchored = "^" .. pat .. "$"
+        if ft:match(anchored) then
+          return false
+        end
+      end
+    end
   end
   if M.get_limit(bufnr) == 0 then
     return false

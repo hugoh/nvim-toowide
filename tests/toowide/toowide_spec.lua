@@ -103,6 +103,13 @@ describe("toowide", function()
     vim.api.nvim_buf_delete(buf, { force = true })
   end)
 
+  it("should_enable respects excluded filetype patterns with Lua patterns", function()
+    local buf = new_buf({ "foo" }, "snacks_terminal")
+    local enabled = toowide.should_enable(buf)
+    assert(enabled == false, "expected disabled for filetype matching wildcard 'snacks_*'")
+    vim.api.nvim_buf_delete(buf, { force = true })
+  end)
+
   it("should_disable when computed limit is 0", function()
     local buf = new_buf({}, "zeroft")
     toowide.config.filetype_limits["zeroft"] = 0

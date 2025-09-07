@@ -26,7 +26,7 @@ local default_config = {
   excluded_filetypes = { "", "nofile", "NeogitStatus", "NeogitDiffView", "snacks_.*" },
   max_lines = 10000,
   debounce_ms = 100,
-  default_limit = 80,
+  default_limit = 0, -- disabled by default
   filetype_limits = { go = 120, lua = 120, yaml = 120 },
 }
 

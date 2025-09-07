@@ -50,7 +50,7 @@ require("toowide").setup({
   excluded_filetypes = { "", "nofile", "NeogitStatus", "NeogitDiffView", "snacks_.*" }, -- Lua patterns
   max_lines = 10000,                     -- disable for huge buffers
   debounce_ms = 100,                     -- debounce changes
-  default_limit = 80,                    -- used when 'textwidth' is 0 and no ft override
+  default_limit = 0,                     -- used when 'textwidth' is 0 and no ft override; disabled by default (0)
   filetype_limits = { go = 120, lua = 120, yaml = 120 },
 })
 ```
@@ -92,4 +92,4 @@ Choose based on whether you prefer visual alignment or linter-accurate limits. n
 
 ## License
 
-[MIT](./LICENSE).
+[MIT](./LICENSE)

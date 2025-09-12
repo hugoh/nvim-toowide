@@ -121,6 +121,9 @@ end
 ---@param bufnr integer Buffer handle
 ---@return boolean enabled
 M.should_enable = function(bufnr)
+  if not (bufnr and vim.api.nvim_buf_is_valid(bufnr)) then
+    return false
+  end
   local ft = vim.bo[bufnr].filetype
   if M.config.excluded_filetypes and #M.config.excluded_filetypes > 0 then
     for _, pat in ipairs(M.config.excluded_filetypes) do

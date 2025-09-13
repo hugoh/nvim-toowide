@@ -165,4 +165,50 @@ describe("toowide", function()
 
     vim.api.nvim_buf_delete(buf, { force = true })
   end)
+
+  describe("is_buf_valid", function()
+    local function get_is_buf_valid()
+      for i = 1, 50 do
+        local name, val = debug.getupvalue(toowide.should_enable, i)
+        if not name then
+          break
+        end
+        if name == "is_buf_valid" then
+          return val
+        end
+      end
+      error("could not find is_buf_valid upvalue")
+    end
+
+    it("returns false for nil or invalid buffer", function()
+      local is_buf_valid = get_is_buf_valid()
+      assert(is_buf_valid(nil) == false, "expected false for nil bufnr")
+      assert(is_buf_valid(-1) == false, "expected false for invalid bufnr")
+    end)
+
+    it("returns true for a valid loaded buffer regardless of check_loaded", function()
+      local is_buf_valid = get_is_buf_valid()
+      local buf = vim.api.nvim_create_buf(true, true)
+      assert(vim.api.nvim_buf_is_valid(buf) == true, "buffer should be valid")
+      assert(vim.api.nvim_buf_is_loaded(buf) == true, "buffer should be loaded")
+      assert(is_buf_valid(buf) == true, "expected true when check_loaded is nil")
+      assert(is_buf_valid(buf, false) == true, "expected true when check_loaded is false")
+      assert(is_buf_valid(buf, true) == true, "expected true when check_loaded is true for loaded buffer")
+      vim.api.nvim_buf_delete(buf, { force = true })
+    end)
+
+    it("honors check_loaded=false for an unloaded, yet valid buffer", function()
+      local is_buf_valid = get_is_buf_valid()
+      local buf = vim.api.nvim_create_buf(true, false)
+      vim.api.nvim_buf_set_name(buf, "toowide_unloaded_" .. tostring(buf))
+      assert(vim.api.nvim_buf_is_valid(buf) == true, "buffer should be valid pre-unload")
+      vim.cmd("silent! bunload " .. buf)
+      assert(vim.api.nvim_buf_is_valid(buf) == true, "buffer should remain valid after bunload")
+      assert(vim.api.nvim_buf_is_loaded(buf) == false, "buffer should be unloaded after bunload")
+      assert(is_buf_valid(buf) == true, "expected true when check_loaded is nil")
+      assert(is_buf_valid(buf, false) == true, "expected true when check_loaded is false")
+      assert(is_buf_valid(buf, true) == false, "expected false when check_loaded is true and buffer is not loaded")
+      vim.cmd("silent! bdelete! " .. buf)
+    end)
+  end)
 end)

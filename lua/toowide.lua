@@ -82,6 +82,16 @@ M.get_limit = function(bufnr)
   return M.config.default_limit
 end
 
+local function is_buf_valid(bufnr, check_loaded)
+  if not (bufnr and vim.api.nvim_buf_is_valid(bufnr)) then
+    return false
+  end
+  if check_loaded and not vim.api.nvim_buf_is_loaded(bufnr) then
+    return false
+  end
+  return true
+end
+
 --- Highlight a section of a buffer
 ---@function highlight
 ---@param bufnr integer Buffer handle
@@ -89,8 +99,7 @@ end
 ---@param end_line? integer 0-indexed exclusive end line
 ---@return nil
 M.highlight = function(bufnr, start_line, end_line)
-  -- Ensure buffer is valid and loaded
-  if not (bufnr and vim.api.nvim_buf_is_valid(bufnr) and vim.api.nvim_buf_is_loaded(bufnr)) then
+  if not is_buf_valid(bufnr, true) then
     return
   end
 
@@ -121,7 +130,7 @@ end
 ---@param bufnr integer Buffer handle
 ---@return boolean enabled
 M.should_enable = function(bufnr)
-  if not (bufnr and vim.api.nvim_buf_is_valid(bufnr)) then
+  if not is_buf_valid(bufnr, true) then
     return false
   end
   local ft = vim.bo[bufnr].filetype
@@ -136,7 +145,6 @@ M.should_enable = function(bufnr)
   if M.get_limit(bufnr) == 0 then
     return false
   end
-  local bt = vim.bo[bufnr].buftype
   return vim.bo[bufnr].modifiable and vim.api.nvim_buf_line_count(bufnr) <= M.config.max_lines
 end
 
